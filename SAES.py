@@ -1,3 +1,7 @@
+def SAES():
+    pass
+
+
 class SAES:
     def __init__(self):
         # 初始化S盒和逆S盒
@@ -94,21 +98,34 @@ class SAES:
             if i == 1:
                 state = self._mix_columns(state)
             state = self._add_round_key(state, [[round_keys[4 + i * 2], round_keys[5 + i * 2]],
-                                               [round_keys[6 + i * 2], round_keys[7 + i * 2]]])
+                                                [round_keys[6 + i * 2], round_keys[7 + i * 2]]])
 
         return state
 
-    def decrypt(self):
-        ciphertext = self.ciphertext_entry.get()
-        key = int(self.key_entry.get(), 16)  # 将输入的密钥字符串转换为整数
-        # 将输入的字符串转换为二维列表
-        try:
-            ciphertext_list = [[int(ciphertext[0], 16), int(ciphertext[1], 16)],
-                               [int(ciphertext[2], 16), int(ciphertext[3], 16)]]
-        except ValueError:
-            self.result_label.config(text="输入的密文格式不正确")
-            return
+    def _inv_shift_rows(self, state):
+        # 逆向行移位
+        for i in range(2):
+            state[i] = state[i][-i:] + state[i][:-i]
+        return state
 
+    def _inv_sub_bytes(self, state, inv_s_box):
+        # 逆向字节替代
+        for i in range(2):
+            for j in range(2):
+                state[i][j] = self._sub_nibbles(state[i][j], inv_s_box)
+        return state
+
+    def _inv_mix_columns(self, state):
+        # 逆向混淆
+        for i in range(2):
+            a = state[i][0]
+            b = state[i][1]
+            state[i][0] = self._gf_mult(9, a) ^ self._gf_mult(2, b)
+            state[i][1] = self._gf_mult(2, a) ^ self._gf_mult(9, b)
+        return state
+
+    def decrypt(self, ciphertext_list, key):
+        # 将密文转为状态矩阵
         state = [[ciphertext_list[0][0], ciphertext_list[0][1]],
                  [ciphertext_list[1][0], ciphertext_list[1][1]]]
         round_keys = self._key_expansion(key)
@@ -126,11 +143,16 @@ class SAES:
             state = self._add_round_key(state, [[round_keys[2 - i * 2], round_keys[3 - i * 2]],
                                                 [round_keys[0 - i * 2], round_keys[1 - i * 2]]])
 
+        # 逆向操作：混淆
+        state = self._inv_mix_columns(state)
+
+        # 逆向操作：轮密钥加
+        state = self._add_round_key(state, [[round_keys[0], round_keys[1]],
+                                            [round_keys[2], round_keys[3]]])
+
+        # 输出解密结果
         decrypted_text = [[state[0][0], state[0][1]],
                           [state[1][0], state[1][1]]]
 
-        self.result_label.config(text="解密结果: " + str(decrypted_text))
-
-
-
+        return decrypted_text
 
