@@ -48,15 +48,7 @@ class SAESApp(QWidget):
         layout.addWidget(self.result_label)
         self.setLayout(layout)
 
-        # 清空按钮
-        self.clear_button = QPushButton('清空')
-        self.clear_button.clicked.connect(self.clear)
-        layout.addWidget(self.clear_button)
 
-        # 导出按钮
-        self.export_button = QPushButton('导出')
-        self.export_button.clicked.connect(self.export_data)
-        layout.addWidget(self.export_button)
 
     def encrypt(self):
         plaintext = self.plain_text_input.text()
@@ -105,31 +97,8 @@ class SAESApp(QWidget):
         self.plain_text_input.setText(plaintext_binary)
         self.result_label.setText(f'解密成功 明文：{plaintext_binary}')
 
-    def export_data(self):
-        plaintext = self.plain_text_input.text()
-        ciphertext = self.cipher_text_input.text()
-        key = self.key_input.text()
 
-        if plaintext == '' and ciphertext == '' and key == '':
-            QMessageBox.warning(self, '警告', '没有数据可以导出')
-            return
 
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        file_name, _ = QFileDialog.getSaveFileName(self, "保存文件", "", "Text Files (*.txt)", options=options)
-
-        if file_name:
-            with open(file_name, 'w') as file:
-                file.write(f'明文: {plaintext}\n')
-                file.write(f'密钥: {key}\n')
-                file.write(f'密文: {ciphertext}\n')
-            QMessageBox.information(self, '提示', '数据已成功导出')
-
-    def clear(self):
-        self.plain_text_input.clear()
-        self.cipher_text_input.clear()
-        self.key_input.clear()
-        self.result_label.clear()
 
 def main():
     app = QApplication(sys.argv)
